@@ -6,23 +6,20 @@ The task is to build a simple product API in TypeScript, which manages product a
 
 ## Getting Started
 
-To run the project, install dependencies and run the start command.
+To run the project,
+
+1. install docker and docker-compose
+2. start docker
+3. and run the following commands.
 
 ```sh
-npm i && npm start
+docker-compose build
+docker-compose up
 ```
 
-To run the project in development mode:
+After the containers started open [http://localhost:3000/](http://localhost:3000/) to use GraphiQL in the browser.
 
-```sh
-npm run dev
-```
-
-To fix linting errors, use the following command:
-
-```sh
-npm run lint
-```
+The Mongo Express admin is available on [http://localhost:8081/](http://localhost:8081/).
 
 ## Contact
 

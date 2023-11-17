@@ -1,0 +1,27 @@
+version: '2'
+
+services:
+  server:
+    container_name: server
+    restart: always
+    build: .
+    ports:
+      - '3000:3000'
+    depends_on:
+      - mongo
+  mongo:
+    container_name: database
+    image: mongo
+    volumes:
+      - ./data:/data/db
+    ports:
+      - '27017:27017'
+  mongo-admin:
+    container_name: admin
+    image: mongo-express
+    ports:
+      - '8081:8081'
+    environment:
+      - PORT=8081
+    depends_on:
+      - mongo
