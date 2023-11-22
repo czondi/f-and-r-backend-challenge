@@ -1,7 +1,10 @@
-import { GraphQLList, GraphQLNonNull, GraphQLString, GraphQLObjectType } from 'graphql';
-import { ProductType, IProduct, ProductInput } from '../types';
+import { GraphQLList, GraphQLNonNull, GraphQLString, GraphQLObjectType, GraphQLBoolean } from 'graphql';
 import { startSession } from 'mongoose';
+import { parse } from 'csv-parse';
+import { ProductType, IProduct, ProductInput, BulkWriteBatchType } from '../types';
 import { ProductModel } from '../models/product';
+import { bulkWriteOnProductModel } from '../helpers';
+import { fetchFile } from '../helpers/fetchFile';
 
 export const Mutation = new GraphQLObjectType({
   name: 'Mutation',
@@ -64,6 +67,57 @@ export const Mutation = new GraphQLObjectType({
         await session.endSession();
 
         return deletedProducts;
+      },
+    },
+    processCSV: {
+      type: GraphQLBoolean,
+      resolve: async (): Promise<boolean> => {
+        // start a process in the background
+        process.nextTick(async () => {
+          try {
+            const session = await startSession();
+
+            await session.withTransaction(async () => {
+              const batch: Array<BulkWriteBatchType> = [];
+
+              console.log('Fetching CSV file...');
+              const csv = await fetchFile('https://api.frw.co.uk/feeds/all_listings.csv');
+
+              console.log('CSV file fetched! Parsing...');
+              const parser = parse(csv, { columns: true });
+
+              parser.on('readable', async () => {
+                let row: any;
+                while ((row = parser.read()) !== null) {
+                  const productName = row['Product Name'];
+                  const uniqueKey = `${row.Vintage}-${productName}-${row.Producer}`;
+
+                  batch.push({ productName, uniqueKey });
+
+                  if (batch.length === 100) {
+                    await bulkWriteOnProductModel(ProductModel, batch);
+
+                    // reset batch
+                    batch.length = 0;
+                  }
+                }
+              });
+
+              parser.on('end', async () => {
+                // finish remaining batch
+                if (batch.length > 0) {
+                  await bulkWriteOnProductModel(ProductModel, batch);
+                }
+
+                console.log('CSV file successfully processed!');
+              });
+            });
+          } catch (error) {
+            console.error(error);
+          }
+        });
+
+        return true;
       },
     },
   }),

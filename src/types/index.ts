@@ -54,3 +54,8 @@ export const ProductInput = new GraphQLInputObjectType({
     producerId: { type: new GraphQLNonNull(GraphQLID) },
   }),
 });
+
+export type BulkWriteBatchType = {
+  productName: string;
+  uniqueKey: string;
+};

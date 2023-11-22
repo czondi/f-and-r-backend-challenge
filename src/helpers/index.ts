@@ -1,0 +1,1 @@
+export { bulkWriteOnProductModel } from './bulkWriteOnProductModel';
