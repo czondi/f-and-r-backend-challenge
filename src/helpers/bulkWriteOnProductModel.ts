@@ -1,13 +1,14 @@
-import { Model } from 'mongoose';
-import { BulkWriteBatchType, IProduct } from '../types';
+import { BulkWriteBatchType } from '../types';
+import { ProductModel } from '../models';
 
-export async function bulkWriteOnProductModel(model: Model<IProduct>, batch: Array<BulkWriteBatchType>) {
-  await model.bulkWrite(
+export async function bulkWriteOnProductModel(batch: Array<BulkWriteBatchType>) {
+  await ProductModel.bulkWrite(
     batch.map(({ productName, uniqueKey }) => ({
       updateOne: {
         filter: { name: productName },
         update: { $set: { uniqueKey } },
         upsert: true,
+        strict: false, // allow to disregard schema
       },
     })),
   );
